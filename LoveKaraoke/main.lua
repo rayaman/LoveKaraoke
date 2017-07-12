@@ -30,6 +30,8 @@ function love.load()
 	source = microphone.newQueueableSource()
 	device:setDataCallback(function(device, data)
 		if recording then
+			source:queue(data)
+			source:play()
 			table.insert(record,{data,os.clock()})
 			test:setDualDim(nil,nil,nil,nil,nil,nil,peakAmplitude(data))
 			test2:setDualDim(nil,nil,nil,nil,nil,nil,rmsAmplitude(data))
@@ -46,12 +48,14 @@ test0:OnReleased(function(b,self)
 	if self.text=="Start Recording" then
 		self.text="Stop Recording"
 		recording=true
-	else
+	elseif self.text=="Stop Recording" then
 		test0.text="Playing Back!"
 		recording=false
 		local step=multi:newStep(1,#record)
 		step:OnStep(function(self,pos)
 			source:queue(record[pos][1])
+			test:setDualDim(nil,nil,nil,nil,nil,nil,peakAmplitude(record[pos][1]))
+			test2:setDualDim(nil,nil,nil,nil,nil,nil,rmsAmplitude(record[pos][1]))
 			if pos>1 then
 				self:hold(record[pos][2]-record[pos-1][2])
 			end
