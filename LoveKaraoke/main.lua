@@ -26,18 +26,21 @@ function RGBToHEX(r,g,b)
 	HEX[1]=L[(r*15)/255];HEX[2]=L[(g*15)/255];HEX[3]=L[(b*15)/255]
 	return table.concat(HEX)
 end
-music=love.audio.newSource("test2.mp3", "stream")
-player=cdgPlayer:init("test2.cdg")
+music=love.audio.newSource("test3.mp3", "stream")
+player=cdgPlayer:init("test3.cdg")
 COLORS={}
-print(#player.colors)
+print("Loading Colors: "..#player.colors)
 for i=1,#player.colors do
 	COLORS[i-1]=Color.new(HEX4ToRGB(bin.NumtoHEX(player.colors[i])))
 	print(i-1,COLORS[i-1])
 end
 BGCOLOR=0
 ImageData=love.image.newImageData(300,216)
+ImageDataRef=love.image.newImageData(300,216)
 Image=love.graphics.newImage(ImageData)
-screen=gui:newImageLabel(Image,"SCREEN",0,0,300*2,216*2)
+screen=gui:newImageLabel(Image,"SCREEN",0,0,300*3,216*3)
+screen:centerX()
+screen:centerY()
 updateFunc=multi:newFunction(function(mself,self)
 	local data=player:next()
 	if not data then return end
@@ -48,6 +51,7 @@ updateFunc=multi:newFunction(function(mself,self)
 		for x=0,299 do
 			for y=0,215 do
 				ImageData:setPixel(x, y, r, g, b, 255)
+				ImageDataRef:setPixel(x, y,data[1],0,0,0)
 			end
 		end
 	elseif cmd=="TILE_BLOCK_XOR" then
@@ -72,24 +76,26 @@ updateFunc=multi:newFunction(function(mself,self)
 		for yy=1,#tile do
 			for xx=1,#tile[yy] do
 				--print(tile[yy]:sub(xx,xx))
-				local rc,gc,bc=ImageData:getPixel(x+(xx-1), y+(yy-1))
-				local cc=tonumber(RGBToHEX(rc,gc,bc),16)
+				local rc=ImageDataRef:getPixel(x+(xx-1), y+(yy-1))
+				local r,g,b=0,0,0
+--~ 				local cc=tonumber(RGBToHEX(rc,gc,bc),16)
 				if tile[yy]:sub(xx,xx)=="0" then
-					local c1=tonumber(RGBToHEX(r1,g1,b1),16)
-					local r, g, b = HEX4ToRGB(bin.NumtoHEX(bit.bxor(cc,c1)))
-					ImageData:setPixel(x+(xx-1), y+(yy-1), r, g, b, 255)
+--~ 					local c1=tonumber(RGBToHEX(r1,g1,b1),16)
+					r, g, b = unpack(COLORS[bit.bxor(data[1],rc)])
+					ImageDataRef:setPixel(x+(xx-1), y+(yy-1),data[1],0,0,0)
 				else
-					local c2=tonumber(RGBToHEX(r2,g2,b2),16)
-					local r, g, b = HEX4ToRGB(bin.NumtoHEX(bit.bxor(cc,c2)))
-					ImageData:setPixel(x+(xx-1), y+(yy-1), r, g, b, 255)
+--~ 					local c2=tonumber(RGBToHEX(r2,g2,b2),16)
+					r, g, b = unpack(COLORS[bit.bxor(data[2],rc)])
+					ImageDataRef:setPixel(x+(xx-1), y+(yy-1),data[2],0,0,0)
 				end
+				ImageData:setPixel(x+(xx-1), y+(yy-1), r, g, b, 255)
 			end
 		end
-		mself:hold(.01)
+		mself:hold(1/90)
 	end
 	-- Update the "Screen"
 	self:SetImage(love.graphics.newImage(ImageData))
-	print(os.clock())
+--~ 	print(os.clock())
 end)
 music:play()
 screen:OnUpdate(updateFunc)
